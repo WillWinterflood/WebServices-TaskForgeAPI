@@ -1,15 +1,10 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict 
+import os
 
-class Settings(BaseSettings): 
-    app_name: str = "Recipe Intelligence API"
-    api_v1_prefix: str = "/api/v1"
-    environment: str = "development"
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    ) 
+class Settings:
+    app_name = os.getenv("APP_NAME", "Recipe Intelligence API")
+    api_v1_prefix = os.getenv("API_V1_PREFIX", "/api/v1")
+    environment = os.getenv("ENVIRONMENT", "development")
+    database_url = os.getenv("DATABASE_URL", "sqlite:///./recipe_intelligence.db")
 
 settings = Settings()
 
