@@ -7,10 +7,9 @@ from app.models.recipe import Recipe
 from app.models.recipe_ingredient import RecipeIngredient
 from app.schemas.recipe import RecipeCreate, RecipeRead, RecipeUpdate
 
-router = APIRouter(prefix="/recipes", tags=["recipes"])
+router = APIRouter(prefix="/recipes", tags=["recipes"]) #Recipe routes
 
-
-def map_recipe(recipe):
+def map_recipe(recipe): #Maps the recipe to the model for response
     items = []
     for link in recipe.recipe_ingredients:
         ingredient_name = ""
@@ -32,23 +31,20 @@ def map_recipe(recipe):
         "ingredients": items,
     }
 
-
-def clean_title(title):
+def clean_title(title): #Cleans title for the recipe
     cleaned = title.strip()
     if not cleaned:
         raise HTTPException(status_code=400, detail="Title is required")
     return cleaned
 
-
-def clean_servings(servings):
+def clean_servings(servings): #Cleans the servings for the recipe + checking its valid
     if servings is None:
         return 1
     if servings < 1:
         raise HTTPException(status_code=400, detail="Servings must be at least 1")
     return servings
 
-
-def validate_recipe_items(db, ingredients):
+def validate_recipe_items(db, ingredients): #Checking the recipe ingredients are valid
     seen = set()
     for item in ingredients:
         if item.ingredient_id in seen:
@@ -68,9 +64,8 @@ def validate_recipe_items(db, ingredients):
         if not ingredient:
             raise HTTPException(status_code=404, detail=f"Ingredient {item.ingredient_id} not found")
 
-
 @router.post("", response_model=RecipeRead, status_code=status.HTTP_201_CREATED)
-def create_recipe(data: RecipeCreate, db=Depends(get_db)):
+def create_recipe(data: RecipeCreate, db=Depends(get_db)): #Creating a recipe with the data
     title = clean_title(data.title)
 
     existing = db.scalar(select(Recipe).where(Recipe.title == title))
@@ -110,23 +105,20 @@ def create_recipe(data: RecipeCreate, db=Depends(get_db)):
     db.refresh(recipe)
     return map_recipe(recipe)
 
-
-@router.get("", response_model=list[RecipeRead])
+@router.get("", response_model=list[RecipeRead]) # Listing all the recipes in the db
 def list_recipes(db=Depends(get_db)):
     recipes = db.scalars(select(Recipe).order_by(Recipe.title.asc())).all()
     return [map_recipe(recipe) for recipe in recipes]
 
-
-@router.get("/{recipe_id}", response_model=RecipeRead)
+@router.get("/{recipe_id}", response_model=RecipeRead) #Getting a recipe with the given id
 def get_recipe(recipe_id: int, db=Depends(get_db)):
     recipe = db.get(Recipe, recipe_id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
     return map_recipe(recipe)
 
-
 @router.patch("/{recipe_id}", response_model=RecipeRead)
-def update_recipe(recipe_id: int, data: RecipeUpdate, db=Depends(get_db)):
+def update_recipe(recipe_id: int, data: RecipeUpdate, db=Depends(get_db)): #Updating a recipe with the given data
     recipe = db.get(Recipe, recipe_id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
@@ -174,9 +166,8 @@ def update_recipe(recipe_id: int, data: RecipeUpdate, db=Depends(get_db)):
     db.refresh(recipe)
     return map_recipe(recipe)
 
-
 @router.delete("/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_recipe(recipe_id: int, db=Depends(get_db)):
+def delete_recipe(recipe_id: int, db=Depends(get_db)): #Deleting an entire recipe when given that id
     recipe = db.get(Recipe, recipe_id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
