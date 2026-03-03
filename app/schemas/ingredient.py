@@ -1,48 +1,30 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel
 
-
-class IngredientBase(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-    calories_per_100g: float = Field(default=0.0, ge=0.0, le=1000.0)
-    protein_per_100g: float = Field(default=0.0, ge=0.0, le=100.0)
-    carbs_per_100g: float = Field(default=0.0, ge=0.0, le=100.0)
-    fat_per_100g: float = Field(default=0.0, ge=0.0, le=100.0)
+#Ingredient endpoints schemas
+class IngredientCreate(BaseModel):
+    name: str
+    calories_per_100g: float = 0.0
+    protein_per_100g: float = 0.0
+    carbs_per_100g: float = 0.0
+    fat_per_100g: float = 0.0
     is_allergen: bool = False
 
-    @field_validator("name")
-    @classmethod
-    def clean_name(cls, value):
-        cleaned = value.strip()
-        if not cleaned:
-            raise ValueError("name must not be empty")
-        return cleaned
-
-
-class IngredientCreate(IngredientBase):
-    pass
-
-
 class IngredientUpdate(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=120)
-    calories_per_100g: float | None = Field(default=None, ge=0.0, le=1000.0)
-    protein_per_100g: float | None = Field(default=None, ge=0.0, le=100.0)
-    carbs_per_100g: float | None = Field(default=None, ge=0.0, le=100.0)
-    fat_per_100g: float | None = Field(default=None, ge=0.0, le=100.0)
+    name: str | None = None
+    calories_per_100g: float | None = None
+    protein_per_100g: float | None = None
+    carbs_per_100g: float | None = None
+    fat_per_100g: float | None = None
     is_allergen: bool | None = None
 
-    @field_validator("name")
-    @classmethod
-    def clean_name(cls, value):
-        if value is None:
-            return value
-
-        cleaned = value.strip()
-        if not cleaned:
-            raise ValueError("name must not be empty")
-        return cleaned
-
-
-class IngredientRead(IngredientBase):
+class IngredientRead(BaseModel):
     id: int
+    name: str
+    calories_per_100g: float
+    protein_per_100g: float
+    carbs_per_100g: float
+    fat_per_100g: float
+    is_allergen: bool
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True

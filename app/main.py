@@ -8,7 +8,6 @@ app = FastAPI(title=settings.app_name)
 
 register_exception_handlers(app)
 
-
 @app.get("/")
 def read_root():
     return {"message": "Recipe Intelligence API running"}

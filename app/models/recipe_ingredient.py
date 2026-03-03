@@ -1,10 +1,8 @@
 from sqlalchemy import Column, Float, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import relationship
-
 from app.db.base import Base
 
-
-class RecipeIngredient(Base):
+class RecipeIngredient(Base): #Relationship between recipe and ingredient
     __tablename__ = "recipe_ingredients"
 
     id = Column(Integer, primary_key=True, index=True)
