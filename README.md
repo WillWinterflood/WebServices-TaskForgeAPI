@@ -81,4 +81,4 @@ uvicorn app.main:app --reload
 - Technical report + GenAI declaration: submitted via Minerva.
 - Slides + oral demo materials: submitted via Minerva.
 
-Why is it coming from my personal account?
+personal
