@@ -6,25 +6,24 @@ The product/project should feel like a real backend service that a mobile/web ap
 
 Hopefully shouldnt only be CRUD.
 
-## What it should be like in my opinion
+## What it should be like
 
-### 1) Core API quality (highest weighting)
-- Reliable authentication and authorization.
-- Clean resource design (ingredients, recipes, analytics).
-- Correct validation and status codes.
-- Consistent JSON response formats.
+### 1) Core API
+- authentication and authorization
+- resource design (ingredients, recipes, analytics)
+- validation and status codes
+- JSON response formats
 
 ### 2) Software engineering quality
-- Clear architecture and folder structure.
-- Meaningful commit history by phase.
-- Testable, reproducible setup (local + Docker).
-- Linting and tests passing in CI.
+- architecture and folder structure
+- commit history by phase
+- Testable, reproducible setup (local + Docker)
+- Linting and tests passing in CI
 
-### 3) Documentation and presentation quality
-- README that lets examiners run and understand the project quickly.
-- Full API docs with examples and error formats.
+### 3) Documentation and presentation
+- README
+- Full API docs with examples and error formats
 - Evidence-based technical report with tradeoffs and reflection.
-- A 5-minute live demo path with deterministic outputs.
 
 ## Project Scope
 
@@ -49,14 +48,6 @@ Hopefully shouldnt only be CRUD.
 - Pytest
 - Ruff
 - GitHub Actions CI
-
-## Rubric Strategy
-- **API Functionality & Implementation (25):** complete and stable endpoints with clean contracts.
-- **Code Quality & Architecture (20):** service-oriented structure, migrations, typed schemas, error consistency.
-- **Documentation (12):** rich OpenAPI docs, API PDF export, clear README and usage examples.
-- **Version Control & Deployment (6):** phase-based commits, Dockerized run, optional live deployment.
-- **Testing & Error Handling (6):** integration tests for auth/CRUD/analytics + structured errors.
-- **Creativity & GenAI Usage (6):** dataset enrichment, recommendations, and explicit AI-assisted design exploration.
 
 ## Planned Endpoint Groups
 - `/health`
@@ -89,3 +80,5 @@ uvicorn app.main:app --reload
 - API documentation PDF: `docs/API_DOCUMENTATION.pdf` (to generate later).
 - Technical report + GenAI declaration: submitted via Minerva.
 - Slides + oral demo materials: submitted via Minerva.
+
+Why is it coming from my personal account?
