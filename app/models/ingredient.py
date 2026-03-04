@@ -1,7 +1,8 @@
 from sqlalchemy import Boolean, Column, Float, Integer, String
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
-class Ingredient(Base):
+class Ingredient(Base): #Ingredients in the db
     __tablename__ = "ingredients"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -11,3 +12,4 @@ class Ingredient(Base):
     carbs_per_100g = Column(Float, nullable=False, default=0.0)
     fat_per_100g = Column(Float, nullable=False, default=0.0)
     is_allergen = Column(Boolean, nullable=False, default=False)
+    recipe_links = relationship("RecipeIngredient", back_populates="ingredient")
