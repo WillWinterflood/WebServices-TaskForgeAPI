@@ -18,6 +18,10 @@ def create_ingredient(data: IngredientCreate, db=Depends(get_db)):
     if existing:
         raise HTTPException(status_code=409, detail="Ingredient already exists")
 
+    data_source = data.data_source.strip().lower() if data.data_source else "manual"
+    if not data_source:
+        data_source = "manual"
+
     ingredient = Ingredient(
         name=name,
         calories_per_100g=data.calories_per_100g,
@@ -25,6 +29,11 @@ def create_ingredient(data: IngredientCreate, db=Depends(get_db)):
         carbs_per_100g=data.carbs_per_100g,
         fat_per_100g=data.fat_per_100g,
         is_allergen=data.is_allergen,
+        is_vegan=data.is_vegan,
+        is_gluten_free=data.is_gluten_free,
+        brand=data.brand,
+        data_source=data_source,
+        source_code=data.source_code,
     )
 
     db.add(ingredient)
@@ -64,6 +73,13 @@ def update_ingredient(ingredient_id: int, data: IngredientUpdate, db=Depends(get
         if existing and existing.id != ingredient_id:
             raise HTTPException(status_code=409, detail="Ingredient already exists")
         updates["name"] = name
+
+    if "data_source" in updates:
+        source = updates["data_source"]
+        if source is None:
+            updates["data_source"] = "manual"
+        else:
+            updates["data_source"] = source.strip().lower() or "manual"
 
     for field, value in updates.items():
         setattr(ingredient, field, value)
