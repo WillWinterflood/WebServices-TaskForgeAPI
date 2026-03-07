@@ -1,9 +1,15 @@
+from datetime import date, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import select
 
+from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.recipe import Recipe
+from app.models.user import User
+from app.models.user_meal import UserMeal
 from app.schemas.analytics import RecipeMacroResult, RecipeNutritionSummary
+from app.schemas.meal import UserWeeklyMacros
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -80,6 +86,61 @@ def macro_result_from_summary(summary):
     }
 
 
+def parse_range(date_from, date_to):
+    if date_from and date_to:
+        try:
+            start = date.fromisoformat(date_from)
+            end = date.fromisoformat(date_to)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="date_from/date_to must be YYYY-MM-DD")
+
+        if start > end:
+            raise HTTPException(status_code=400, detail="date_from cannot be after date_to")
+        return start, end
+
+    end = date.today()
+    start = end - timedelta(days=6)
+    return start, end
+
+
+def weekly_macros_for_user(user_id, start, end, db):
+    meals = (
+        db.query(UserMeal)
+        .filter(UserMeal.user_id == user_id)
+        .filter(UserMeal.eaten_on >= start)
+        .filter(UserMeal.eaten_on <= end)
+        .all()
+    )
+
+    total_calories = 0.0
+    total_protein = 0.0
+    total_carbs = 0.0
+    total_fat = 0.0
+
+    for meal in meals:
+        recipe = meal.recipe
+        if not recipe:
+            continue
+
+        summary = calc_recipe_macros(recipe)
+        factor = meal.servings_eaten
+
+        total_calories += summary["calories_per_serving"] * factor
+        total_protein += summary["protein_per_serving"] * factor
+        total_carbs += summary["carbs_per_serving"] * factor
+        total_fat += summary["fat_per_serving"] * factor
+
+    return {
+        "user_id": user_id,
+        "date_from": start.isoformat(),
+        "date_to": end.isoformat(),
+        "total_calories": round(total_calories, 2),
+        "total_protein": round(total_protein, 2),
+        "total_carbs": round(total_carbs, 2),
+        "total_fat": round(total_fat, 2),
+    }
+
+
 @router.get("/recipes/{recipe_id}/summary", response_model=RecipeNutritionSummary)
 def recipe_nutrition_summary(recipe_id: int = Path(ge=1), db=Depends(get_db)):
     recipe = db.get(Recipe, recipe_id)
@@ -131,3 +192,33 @@ def low_carb_recipes(
 
     matched.sort(key=lambda item: item["carbs_per_serving"])
     return matched[:limit]
+
+
+@router.get("/users/{user_id}/weekly-macros", response_model=UserWeeklyMacros)
+def user_weekly_macros(
+    user_id: int,
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
+    current_user=Depends(get_current_user),
+    db=Depends(get_db),
+):
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if current_user.id != user_id and not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not allowed")
+
+    start, end = parse_range(date_from, date_to)
+    return weekly_macros_for_user(user_id, start, end, db)
+
+
+@router.get("/me/weekly-macros", response_model=UserWeeklyMacros)
+def me_weekly_macros(
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
+    current_user=Depends(get_current_user),
+    db=Depends(get_db),
+):
+    start, end = parse_range(date_from, date_to)
+    return weekly_macros_for_user(current_user.id, start, end, db)
