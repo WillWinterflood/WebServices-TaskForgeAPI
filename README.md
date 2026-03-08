@@ -10,7 +10,7 @@ A FastAPI backend for ingredients, recipes, and nutrition analytics.
 - Food dataset search (`/api/v1/foods/search`)
 - Health check (`/api/v1/health`)
 
-## Quickstart
+## Quickstart (Local Python)
 ```bash
 py -m pip install -r requirements.txt
 py -m alembic -c alembic.ini upgrade head
@@ -18,6 +18,17 @@ py -m uvicorn app.main:app --reload
 ```
 
 Open docs at `http://127.0.0.1:8000/docs`.
+
+## Run with Docker + Redis
+```bash
+docker compose up --build
+```
+
+This starts:
+- `api` on `http://127.0.0.1:8000`
+- `redis` on `localhost:6379`
+
+Redis is used as a cache for `GET /api/v1/foods/search`.
 
 ## Open Food Facts Integration
 Dataset source:
