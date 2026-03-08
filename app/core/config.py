@@ -1,11 +1,23 @@
 import os
+from pathlib import Path
+
+
+def build_default_database_url():
+    if os.name == "nt":
+        base_dir = Path(os.getenv("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "RecipeIntelligenceAPI"
+    else:
+        base_dir = Path.home() / ".recipe-intelligence-api"
+
+    base_dir.mkdir(parents=True, exist_ok=True)
+    database_path = (base_dir / "recipe_intelligence.db").resolve()
+    return f"sqlite:///{database_path.as_posix()}"
 
 
 class Settings:
-    app_name = os.getenv("APP_NAME", "Recipe Intelligence API")
+    app_name = os.getenv("APP_NAME", "Healthy Recipe Search and Macro Recommendation API")
     api_v1_prefix = os.getenv("API_V1_PREFIX", "/api/v1")
     environment = os.getenv("ENVIRONMENT", "development")
-    database_url = os.getenv("DATABASE_URL", "sqlite:///./recipe_intelligence.db")
+    database_url = os.getenv("DATABASE_URL") or build_default_database_url()
 
     jwt_secret_key = os.getenv("JWT_SECRET_KEY", "change-me-in-production")
     jwt_algorithm = os.getenv("JWT_ALGORITHM", "HS256")

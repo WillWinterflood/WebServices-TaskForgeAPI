@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+﻿from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 
 from app.api.deps import get_current_user
@@ -7,10 +7,16 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import TokenResponse, UserLogin, UserRead, UserRegister
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["3. Auth (Optional)"])
 
 
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a user",
+    description="Optional extension. Use this only if you want to test authenticated features.",
+)
 def register_user(data: UserRegister, db=Depends(get_db)):
     email = data.email.strip().lower()
     if not email:
@@ -43,7 +49,12 @@ def register_user(data: UserRegister, db=Depends(get_db)):
     return user
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    summary="Log in and get a bearer token",
+    description="Optional extension. Use the returned access_token with the Authorize button if you want to test protected endpoints.",
+)
 def login_user(data: UserLogin, db=Depends(get_db)):
     email = data.email.strip().lower()
     user = db.scalar(select(User).where(User.email == email))
@@ -60,6 +71,11 @@ def login_user(data: UserLogin, db=Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@router.get("/me", response_model=UserRead)
+@router.get(
+    "/me",
+    response_model=UserRead,
+    summary="Get the current authenticated user",
+    description="Optional extension. Call this after logging in and authorizing with a bearer token.",
+)
 def read_me(current_user=Depends(get_current_user)):
     return current_user
