@@ -1,0 +1,29 @@
+services:
+  api:
+    build: .
+    container_name: recipe-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.example
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./:/app
+    depends_on:
+      - redis
+    command: >
+      sh -c "python -m alembic -c alembic.ini upgrade head &&
+             python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  redis:
+    image: redis:7-alpine
+    container_name: recipe-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  redis_data:
