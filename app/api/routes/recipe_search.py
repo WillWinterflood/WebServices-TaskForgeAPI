@@ -1,18 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
+
 from app.db.session import get_db
 from app.models.recipe import Recipe
 from app.models.recipe_ingredient import RecipeIngredient
-from app.schemas.error import ErrorResponse
 from app.schemas.recipe import RecipeRead
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
-COMMON_ERROR_RESPONSES = {
-    422: {"model": ErrorResponse, "description": "Validation failed"},
-}
 
-def map_recipe(recipe): #Maps the recipe to the response model
+def map_recipe(recipe):  # Maps the recipe to the response model
     items = []
     for link in recipe.recipe_ingredients:
         name = ""
@@ -34,24 +31,36 @@ def map_recipe(recipe): #Maps the recipe to the response model
         "ingredients": items,
     }
 
-@router.get( #Searching for the recipes with the given parameters
-    "/search",
-    response_model=list[RecipeRead],
-    responses={
-        **COMMON_ERROR_RESPONSES,
-        400: {"model": ErrorResponse, "description": "Bad request"},
-    },
-)
-def search_recipes( 
+
+def matches_dietary(recipe, vegan, gluten_free):
+    ingredients = [link.ingredient for link in recipe.recipe_ingredients if link.ingredient]
+
+    if vegan:
+        for ingredient in ingredients:
+            if ingredient.is_vegan is False:
+                return False
+
+    if gluten_free:
+        for ingredient in ingredients:
+            if ingredient.is_gluten_free is False:
+                return False
+
+    return True
+
+
+@router.get("/search", response_model=list[RecipeRead])
+def search_recipes(
     title: str | None = Query(default=None, min_length=1),
     ingredient_id: int | None = Query(default=None, ge=1),
     min_servings: int | None = Query(default=None, ge=1),
     max_servings: int | None = Query(default=None, ge=1),
-    sort_by: str = Query(default="title"),  
-    sort_order: str = Query(default="asc"), 
-    db=Depends(get_db), 
+    vegan: bool | None = Query(default=None),
+    gluten_free: bool | None = Query(default=None),
+    sort_by: str = Query(default="title"),
+    sort_order: str = Query(default="asc"),
+    db=Depends(get_db),
 ):
-    if min_servings is not None and max_servings is not None and min_servings > max_servings: 
+    if min_servings is not None and max_servings is not None and min_servings > max_servings:
         raise HTTPException(status_code=400, detail="min_servings cannot be greater than max_servings")
 
     sort_columns = {
@@ -91,6 +100,12 @@ def search_recipes(
         statement = statement.order_by(sort_column.asc())
 
     recipes = db.scalars(statement).all()
-    return [map_recipe(recipe) for recipe in recipes]
 
-#Essentially these are all checking the search parameters are correct..
+    if vegan is not None or gluten_free is not None:
+        require_vegan = bool(vegan)
+        require_gluten_free = bool(gluten_free)
+        recipes = [
+            recipe for recipe in recipes if matches_dietary(recipe, require_vegan, require_gluten_free)
+        ]
+
+    return [map_recipe(recipe) for recipe in recipes]
