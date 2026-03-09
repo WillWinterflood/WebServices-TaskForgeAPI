@@ -1,14 +1,25 @@
-# Recipe Intelligence API (COMP3011 Coursework 1)
+# Healthy Recipe Search and Macro Recommendation API
 
-A FastAPI backend for ingredients, recipes, and nutrition analytics.
+A FastAPI backend for searching healthy recipes, filtering by macro ranges, and finding similar recipes by macro profile.
 
-## What It Does
-- Ingredient CRUD (`/api/v1/ingredients/*`)
-- Recipe CRUD with ingredient composition (`/api/v1/recipes/*`)
-- Recipe search/filter/sort (`/api/v1/recipes/search`)
-- Nutrition analytics (`/api/v1/analytics/*`)
-- Food dataset search (`/api/v1/foods/search`)
-- Health check (`/api/v1/health`)
+## Primary Workflow
+1. Start the API
+2. Import the healthy-diet dataset
+3. Call `GET /api/v1/recipes`
+4. Call `GET /api/v1/recipes/search`
+5. Call `GET /api/v1/recipes/{recipe_id}/similar`
+6. Optionally call `GET /api/v1/recipes/recommend`
+
+If you are unsure where to start in Swagger, open `GET /api/v1/guide` first.
+
+## What The API Does
+- list imported healthy recipes
+- search recipes by title
+- filter recipes by diet type and cuisine type
+- filter recipes by protein, carbs, and fat ranges
+- find recipes with similar macro profiles
+- recommend recipes for target macro values
+- optionally create your own manual macro-based recipes
 
 ## Quickstart (Local Python)
 ```bash
@@ -19,41 +30,55 @@ py -m uvicorn app.main:app --reload
 
 Open docs at `http://127.0.0.1:8000/docs`.
 
-## Run with Docker + Redis
+## Run with Docker
 ```bash
 docker compose up --build
 ```
 
-This starts:
-- `api` on `http://127.0.0.1:8000`
-- `redis` on `localhost:6379`
+This starts the API on `http://127.0.0.1:8000`.
 
-Redis is used as a cache for `GET /api/v1/foods/search`.
+## Healthy Diet Dataset
+Primary dataset:
+- Kaggle handle: `thedevastator/healthy-diet-recipes-a-comprehensive-dataset`
 
-## Open Food Facts Integration
-Dataset source:
-- https://world.openfoodfacts.org/data
-
-Importer script:
+Recommended import command:
 ```bash
-py scripts/import_openfoodfacts.py --max-products 2000
+py scripts/import_healthy_diet_recipes.py --max-recipes 2000
 ```
 
-Optional local file import:
+Docker import command:
 ```bash
-py scripts/import_openfoodfacts.py --input-file openfoodfacts-products.jsonl.gz --max-products 2000
+docker compose exec api python scripts/import_healthy_diet_recipes.py --max-recipes 2000
 ```
 
-Imported records are marked with:
-- `data_source = "openfoodfacts"`
-- optional `source_code` barcode
+If `kagglehub` cannot download the dataset on your machine, download the CSV files yourself and use either:
+```bash
+py scripts/import_healthy_diet_recipes.py --input-dir path\to\dataset-folder --max-recipes 2000
+```
+or
+```bash
+py scripts/import_healthy_diet_recipes.py --input-file path\to\All_Diets.csv --max-recipes 2000
+```
 
-## Example Strong Analytics Endpoints
-- `GET /api/v1/analytics/recipes/{recipe_id}/summary`
-- `GET /api/v1/analytics/recipes/high-protein?min_protein_per_serving=25`
-- `GET /api/v1/analytics/recipes/low-carb?max_carbs_per_serving=20`
-- `GET /api/v1/foods/search?min_protein=20&max_carbs=10`
+## Recommended Demo Order
+1. `GET /api/v1/guide`
+2. `GET /api/v1/recipes`
+3. `GET /api/v1/recipes/search?diet_type=keto&min_protein=20`
+4. `GET /api/v1/recipes/{recipe_id}/similar`
+5. `GET /api/v1/recipes/recommend?target_protein=30&target_carbs=20&target_fat=10`
+
+## Optional Manual CRUD
+Use these only after the dataset import is working:
+- `POST /api/v1/recipes`
+- `PATCH /api/v1/recipes/{recipe_id}`
+- `DELETE /api/v1/recipes/{recipe_id}`
+
+## Optional Auth
+Auth is kept as an optional extension:
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
 
 ## Assessment Checklist Mapping
 - [docs/ASSESSMENT_CHECKLIST.md](docs/ASSESSMENT_CHECKLIST.md)
-- [docs/DATASET_OPENFOODFACTS.md](docs/DATASET_OPENFOODFACTS.md)
+- [docs/DATASET_HEALTHY_DIET.md](docs/DATASET_HEALTHY_DIET.md)
