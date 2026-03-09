@@ -79,6 +79,7 @@ Auth is kept as an optional extension:
 - `POST /api/v1/auth/login`
 - `GET /api/v1/auth/me`
 
-## Assessment Checklist Mapping
-- [docs/ASSESSMENT_CHECKLIST.md](docs/ASSESSMENT_CHECKLIST.md)
-- [docs/DATASET_HEALTHY_DIET.md](docs/DATASET_HEALTHY_DIET.md)
+## API Documentation
+- [docs/API_DOC.md](docs/API_DOC.md)
+
+For submission, export `docs/API_DOC.md` to PDF and reference that PDF in the final repo and report.
