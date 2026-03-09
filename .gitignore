@@ -23,7 +23,9 @@ htmlcov/
 # Databases and local data
 *.db
 *.sqlite
+*.db-journal
 /data/
+/.local_data/
 
 # Editor and OS files
 .vscode/
