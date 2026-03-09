@@ -15,7 +15,7 @@ class Ingredient(Base):  # Ingredients in the db
     fat_per_100g = Column(Float, nullable=False, default=0.0)
     is_allergen = Column(Boolean, nullable=False, default=False)
 
-    # Dataset enrichment fields (Open Food Facts)
+    # Source metadata fields
     is_vegan = Column(Boolean, nullable=True)
     is_gluten_free = Column(Boolean, nullable=True)
     brand = Column(String(120), nullable=True)

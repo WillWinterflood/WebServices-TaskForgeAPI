@@ -22,7 +22,7 @@ def search_foods(
     min_protein: float | None = Query(default=None, ge=0.0),
     max_carbs: float | None = Query(default=None, ge=0.0),
     max_calories: float | None = Query(default=None, ge=0.0),
-    source: str | None = Query(default="openfoodfacts"),
+    source: str | None = Query(default=None),
     limit: int = Query(default=25, ge=1, le=200),
     db=Depends(get_db),
 ):
@@ -48,7 +48,7 @@ def search_foods(
     if source:
         statement = statement.where(Ingredient.data_source == source.strip().lower())
 
-    statement = statement.order_by(Ingredient.protein_per_100g.desc()).limit(limit)
+    statement = statement.order_by(Ingredient.name.asc()).limit(limit)
     rows = db.scalars(statement).all()
 
     response = [IngredientRead.model_validate(row).model_dump() for row in rows]

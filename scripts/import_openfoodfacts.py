@@ -2,7 +2,13 @@ import argparse
 import gzip
 import io
 import json
+import sys
+from pathlib import Path
 from urllib.request import urlopen
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from sqlalchemy import select
 
@@ -94,16 +100,26 @@ def iter_products_from_url(url):
                     continue
 
 
+def iter_json_lines(handle):
+    for line in handle:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            yield json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+
 def iter_products_from_file(path):
-    with gzip.open(path, "rt", encoding="utf-8", errors="ignore") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                yield json.loads(line)
-            except json.JSONDecodeError:
-                continue
+    file_path = Path(path)
+    if file_path.suffix == ".gz":
+        with gzip.open(file_path, "rt", encoding="utf-8", errors="ignore") as handle:
+            yield from iter_json_lines(handle)
+        return
+
+    with open(file_path, "rt", encoding="utf-8", errors="ignore") as handle:
+        yield from iter_json_lines(handle)
 
 
 def import_openfoodfacts(source_url, input_file, max_products):
@@ -137,7 +153,6 @@ def import_openfoodfacts(source_url, input_file, max_products):
                 existing = db.scalar(select(Ingredient).where(Ingredient.name == mapped["name"]))
 
             if existing:
-                # Update only records that are already from Open Food Facts.
                 if existing.data_source != "openfoodfacts":
                     skipped += 1
                     continue
