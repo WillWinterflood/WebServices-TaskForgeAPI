@@ -62,6 +62,9 @@ Authentication is optional in this project.
 
 Protected route:
 - `GET /api/v1/auth/me`
+- `POST /api/v1/recipes`
+- `PATCH /api/v1/recipes/{recipe_id}`
+- `DELETE /api/v1/recipes/{recipe_id}`
 
 Bearer token flow:
 1. call `POST /api/v1/auth/register`
@@ -69,6 +72,7 @@ Bearer token flow:
 3. copy `access_token`
 4. use Swagger `Authorize`
 5. call `GET /api/v1/auth/me`
+6. use the same bearer token for recipe create, update, and delete
 
 ## Error Format
 The API uses a consistent error wrapper.
@@ -152,6 +156,8 @@ Purpose:
 #### `POST /api/v1/recipes`
 Purpose:
 - create a manual recipe row
+- requires a bearer token
+- the new recipe is linked to the logged-in user
 
 Request body example:
 ```json
@@ -170,6 +176,9 @@ Request body example:
 #### `PATCH /api/v1/recipes/{recipe_id}`
 Purpose:
 - update a recipe row
+- requires a bearer token
+- only the user who created that manual recipe can update it
+- imported dataset recipes are read-only
 
 Request body example:
 ```json
@@ -184,6 +193,9 @@ Request body example:
 #### `DELETE /api/v1/recipes/{recipe_id}`
 Purpose:
 - delete a recipe row
+- requires a bearer token
+- only the user who created that manual recipe can delete it
+- imported dataset recipes are read-only
 
 Response:
 - `204 No Content`

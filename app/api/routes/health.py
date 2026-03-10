@@ -15,23 +15,30 @@ def health_check():
 @router.get(
     "/guide",
     summary="Show the recommended API workflow",
-    description="Use this when you are unsure which endpoint to call first. It explains the intended demo order for the macro-focused recipe API.",
+    description="Use this when you are unsure which endpoint to call first. It explains the intended docs order for the macro-focused recipe API, including the optional authentication path.",
 )
 def api_guide():
     return {
         "primary_workflow": [
             "1. Run the healthy-diet dataset importer with scripts/import_healthy_diet_recipes.py.",
-            "2. Call GET /api/v1/recipes to confirm imported recipes exist.",
-            "3. Call GET /api/v1/recipes/search to filter by title, diet, cuisine, or macro ranges.",
-            "4. Call GET /api/v1/recipes/{recipe_id}/similar to find recipes with similar macro profiles.",
-            "5. Optionally call GET /api/v1/recipes/recommend with target macros.",
+            "2. If you want protected features, register, log in, and authorize with a bearer token.",
+            "3. Use the protected recipe routes to create, update, or delete your own manual recipes.",
+            "4. Use GET /api/v1/recipes to confirm imported recipes exist.",
+            "5. Use GET /api/v1/recipes/search to filter by title, diet, cuisine, or macro ranges.",
+            "6. Use GET /api/v1/recipes/{recipe_id}/similar to find recipes with similar macro profiles.",
+            "7. Optionally call GET /api/v1/recipes/recommend with target macros.",
         ],
         "important_notes": [
             "This dataset is strong for macro-based filtering and similarity.",
             "The main API story is recipe search and recommendation, not ingredient-level nutrition.",
-            "Auth endpoints are optional and are not needed for the main demo.",
+            "Read-only recipe discovery endpoints are public.",
+            "Creating, updating, and deleting manual recipes requires a bearer token and ownership of that recipe.",
         ],
         "recommended_endpoints": {
+            "register_user": "/api/v1/auth/register",
+            "log_in": "/api/v1/auth/login",
+            "confirm_current_user": "/api/v1/auth/me",
+            "create_recipe": "/api/v1/recipes",
             "list_recipes": "/api/v1/recipes",
             "search_recipes": "/api/v1/recipes/search",
             "similar_recipes": "/api/v1/recipes/{recipe_id}/similar",

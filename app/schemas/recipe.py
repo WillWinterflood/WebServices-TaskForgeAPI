@@ -61,6 +61,7 @@ class RecipeRead(BaseModel):
     fat_g: float
     data_source: str
     source_code: str | None = None
+    created_by_user_id: int | None = None
 
     class Config:
         from_attributes = True

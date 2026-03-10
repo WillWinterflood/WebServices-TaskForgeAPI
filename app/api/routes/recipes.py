@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import select
 
+from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.recipe import Recipe
 from app.schemas.recipe import RecipeCreate, RecipeRead, RecipeUpdate
 
-router = APIRouter(prefix="/recipes", tags=["2. Recipes"])
+router = APIRouter(prefix="/recipes")
 ACTIVE_SOURCES = ["healthy_diet_kaggle", "manual"]
 
 
@@ -29,6 +30,7 @@ def map_recipe(recipe):
         "fat_g": float(recipe.fat_g or 0.0),
         "data_source": recipe.data_source,
         "source_code": recipe.source_code,
+        "created_by_user_id": recipe.created_by_user_id,
     }
 
 
@@ -55,14 +57,23 @@ def clean_macro(value, field_name):
     return float(value)
 
 
+def ensure_user_can_modify_recipe(recipe, current_user):
+    if recipe.data_source != "manual":
+        raise HTTPException(status_code=403, detail="Imported recipes are read-only")
+
+    if recipe.created_by_user_id is None or recipe.created_by_user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only modify your own recipes")
+
+
 @router.post(
     "",
+    tags=["3. Your Recipes (Protected)"],
     response_model=RecipeRead,
     status_code=status.HTTP_201_CREATED,
     summary="Create a custom recipe",
-    description="Use this to add your own recipe manually with diet, cuisine, and macro values.",
+    description="Protected recipe action. After registering and logging in, use this to create your own recipe manually with diet, cuisine, and macro values. The recipe will be linked to your account.",
 )
-def create_recipe(data: RecipeCreate, db=Depends(get_db)):
+def create_recipe(data: RecipeCreate, db=Depends(get_db), current_user=Depends(get_current_user)):
     recipe = Recipe(
         title=clean_title(data.title),
         description=normalize_text(data.description),
@@ -74,6 +85,7 @@ def create_recipe(data: RecipeCreate, db=Depends(get_db)):
         fat_g=clean_macro(data.fat_g, "fat_g"),
         data_source="manual",
         source_code=None,
+        created_by_user_id=current_user.id,
     )
 
     db.add(recipe)
@@ -84,9 +96,10 @@ def create_recipe(data: RecipeCreate, db=Depends(get_db)):
 
 @router.get(
     "",
+    tags=["4. Recipe Discovery (Public)"],
     response_model=list[RecipeRead],
     summary="List recipes",
-    description="Main confirmation endpoint after importing the healthy-diet dataset. If this returns an empty list, the dataset has not been imported into the current database yet.",
+    description="Public recipe discovery step. Use this after importing the healthy-diet dataset to confirm that recipe rows exist in the current database.",
 )
 def list_recipes(
     limit: int = Query(default=100, ge=1, le=500, description="Maximum number of recipes to return."),
@@ -104,9 +117,10 @@ def list_recipes(
 
 @router.get(
     "/{recipe_id}",
+    tags=["4. Recipe Discovery (Public)"],
     response_model=RecipeRead,
     summary="Get a single recipe",
-    description="Use this to inspect one recipe in full after listing or searching recipes.",
+    description="Public recipe discovery step. Use this to inspect one recipe in full after listing or searching recipes.",
 )
 def get_recipe(recipe_id: int, db=Depends(get_db)):
     recipe = db.get(Recipe, recipe_id)
@@ -117,14 +131,16 @@ def get_recipe(recipe_id: int, db=Depends(get_db)):
 
 @router.patch(
     "/{recipe_id}",
+    tags=["3. Your Recipes (Protected)"],
     response_model=RecipeRead,
     summary="Update a custom recipe",
-    description="Use this to edit a recipe row manually. Imported healthy-diet rows can also be edited, but the importer may overwrite them if re-run with the same source_code.",
+    description="Protected recipe action. Use this to edit one of your own manual recipes. You must be logged in, and only the recipe creator can update it.",
 )
-def update_recipe(recipe_id: int, data: RecipeUpdate, db=Depends(get_db)):
+def update_recipe(recipe_id: int, data: RecipeUpdate, db=Depends(get_db), current_user=Depends(get_current_user)):
     recipe = db.get(Recipe, recipe_id)
     if not recipe or recipe.data_source not in ACTIVE_SOURCES:
         raise HTTPException(status_code=404, detail="Recipe not found")
+    ensure_user_can_modify_recipe(recipe, current_user)
 
     updates = data.model_dump(exclude_unset=True)
     if not updates:
@@ -161,14 +177,16 @@ def update_recipe(recipe_id: int, data: RecipeUpdate, db=Depends(get_db)):
 
 @router.delete(
     "/{recipe_id}",
+    tags=["3. Your Recipes (Protected)"],
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a recipe",
-    description="Use this to remove a recipe row from the database.",
+    description="Protected recipe action. Use this to delete one of your own manual recipes. You must be logged in, and only the recipe creator can delete it.",
 )
-def delete_recipe(recipe_id: int, db=Depends(get_db)):
+def delete_recipe(recipe_id: int, db=Depends(get_db), current_user=Depends(get_current_user)):
     recipe = db.get(Recipe, recipe_id)
     if not recipe or recipe.data_source not in ACTIVE_SOURCES:
         raise HTTPException(status_code=404, detail="Recipe not found")
+    ensure_user_can_modify_recipe(recipe, current_user)
 
     db.delete(recipe)
     db.commit()

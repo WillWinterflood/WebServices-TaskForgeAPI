@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.models.recipe import Recipe
 from app.schemas.recipe import RecipeMatchRead, RecipeRead
 
-router = APIRouter(prefix="/recipes", tags=["2. Recipes"])
+router = APIRouter(prefix="/recipes", tags=["4. Recipe Discovery (Public)"])
 ACTIVE_SOURCES = ["healthy_diet_kaggle", "manual"]
 TITLE_STOPWORDS = {
     "and",
@@ -66,6 +66,7 @@ def map_recipe(recipe):
         "fat_g": float(recipe.fat_g or 0.0),
         "data_source": recipe.data_source,
         "source_code": recipe.source_code,
+        "created_by_user_id": recipe.created_by_user_id,
     }
 
 
@@ -170,7 +171,7 @@ def similarity_score(shared_terms, source_recipe, candidate_recipe):
     "/search",
     response_model=list[RecipeRead],
     summary="Search recipes by title, diet, cuisine, and macro ranges",
-    description="Primary discovery endpoint. Use this to search the healthy recipe dataset by recipe name or macro constraints.",
+    description="Public recipe discovery step. Use this to search the healthy recipe dataset by recipe name or macro constraints.",
 )
 def search_recipes(
     filter_by: SearchMode = Query(
@@ -237,7 +238,7 @@ def search_recipes(
     "/{recipe_id}/similar",
     response_model=list[RecipeMatchRead],
     summary="Find similar recipes by recipe terms or by macros",
-    description="Choose whether similarity should be driven by shared food words in the title or by macro closeness. Recipe mode avoids obviously unrelated results such as chicken recipes matching cakes purely on macros.",
+    description="Public recipe discovery step. Choose whether similarity should be driven by shared food words in the title or by macro closeness. Recipe mode avoids obviously unrelated results such as chicken recipes matching cakes purely on macros.",
 )
 def similar_recipes(
     recipe_id: int,
@@ -307,7 +308,7 @@ def similar_recipes(
     "/recommend",
     response_model=list[RecipeMatchRead],
     summary="Recommend recipes for target macros",
-    description="Returns recipes whose macro profile is closest to the requested protein, carbohydrate, and fat targets.",
+    description="Public recipe discovery step. Returns recipes whose macro profile is closest to the requested protein, carbohydrate, and fat targets.",
 )
 def recommend_recipes(
     target_protein: float = Query(ge=0.0),

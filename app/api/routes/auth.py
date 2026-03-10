@@ -7,7 +7,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import TokenResponse, UserLogin, UserRead, UserRegister
 
-router = APIRouter(prefix="/auth", tags=["3. Auth (Optional)"])
+router = APIRouter(prefix="/auth", tags=["2. Authentication Setup"])
 
 
 @router.post(
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/auth", tags=["3. Auth (Optional)"])
     response_model=UserRead,
     status_code=status.HTTP_201_CREATED,
     summary="Register a user",
-    description="Optional extension. Use this only if you want to test authenticated features.",
+    description="Step 1 for protected features. Create an account before logging in and using the protected recipe write routes.",
 )
 def register_user(data: UserRegister, db=Depends(get_db)):
     email = data.email.strip().lower()
@@ -53,7 +53,7 @@ def register_user(data: UserRegister, db=Depends(get_db)):
     "/login",
     response_model=TokenResponse,
     summary="Log in and get a bearer token",
-    description="Optional extension. Use the returned access_token with the Authorize button if you want to test protected endpoints.",
+    description="Step 2 for protected features. Use the returned access_token with the Authorize button before creating, updating, or deleting your own recipes.",
 )
 def login_user(data: UserLogin, db=Depends(get_db)):
     email = data.email.strip().lower()
@@ -75,7 +75,7 @@ def login_user(data: UserLogin, db=Depends(get_db)):
     "/me",
     response_model=UserRead,
     summary="Get the current authenticated user",
-    description="Optional extension. Call this after logging in and authorizing with a bearer token.",
+    description="Step 3 for protected features. Call this after authorizing to confirm which account is currently logged in.",
 )
 def read_me(current_user=Depends(get_current_user)):
     return current_user

@@ -68,10 +68,12 @@ py scripts/import_healthy_diet_recipes.py --input-file path\to\All_Diets.csv --m
 5. `GET /api/v1/recipes/recommend?target_protein=30&target_carbs=20&target_fat=10`
 
 ## Optional Manual CRUD
-Use these only after the dataset import is working:
+Use these only after the dataset import is working and after logging in:
 - `POST /api/v1/recipes`
 - `PATCH /api/v1/recipes/{recipe_id}`
 - `DELETE /api/v1/recipes/{recipe_id}`
+
+Manual recipes are linked to the logged-in user who created them. Imported dataset recipes remain public and read-only.
 
 ## Optional Auth
 Auth is kept as an optional extension:

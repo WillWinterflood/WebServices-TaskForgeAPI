@@ -15,3 +15,4 @@ class User(Base):
     is_admin = Column(Boolean, nullable=False, default=False)
 
     meals = relationship("UserMeal", back_populates="user", cascade="all, delete-orphan")
+    recipes = relationship("Recipe", back_populates="created_by_user")

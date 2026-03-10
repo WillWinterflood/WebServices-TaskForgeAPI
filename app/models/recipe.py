@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Float, Integer, String, Text
+from sqlalchemy import Column, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -19,9 +19,11 @@ class Recipe(Base):
     fat_g = Column(Float, nullable=False, default=0.0)
     data_source = Column(String(50), nullable=False, default="manual", index=True)
     source_code = Column(String(64), nullable=True, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
 
     recipe_ingredients = relationship(
         "RecipeIngredient",
         back_populates="recipe",
         cascade="all, delete-orphan",
     )
+    created_by_user = relationship("User", back_populates="recipes")
