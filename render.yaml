@@ -1,0 +1,34 @@
+databases:
+  - name: taskforge-db
+    plan: free
+    databaseName: taskforge
+    user: taskforge
+
+services:
+  - type: web
+    name: taskforge-api
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: /bin/sh -c "python -m alembic -c alembic.ini upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: APP_NAME
+        value: Healthy Recipe Search and Macro Recommendation API
+      - key: API_V1_PREFIX
+        value: /api/v1
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: taskforge-db
+          property: connectionString
+      - key: REDIS_ENABLED
+        value: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 60
