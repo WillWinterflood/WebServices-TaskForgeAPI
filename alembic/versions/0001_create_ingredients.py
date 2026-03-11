@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column("protein_per_100g", sa.Float(), nullable=False, server_default="0"),
         sa.Column("carbs_per_100g", sa.Float(), nullable=False, server_default="0"),
         sa.Column("fat_per_100g", sa.Float(), nullable=False, server_default="0"),
-        sa.Column("is_allergen", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("is_allergen", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_ingredients_id", "ingredients", ["id"])
