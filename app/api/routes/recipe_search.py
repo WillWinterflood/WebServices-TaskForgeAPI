@@ -1,12 +1,13 @@
 import re
 from enum import Enum
+from itertools import combinations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 
 from app.db.session import get_db
 from app.models.recipe import Recipe
-from app.schemas.recipe import RecipeMatchRead, RecipeRead
+from app.schemas.recipe import MealPlanRead, RecipeMatchRead, RecipeRead
 
 router = APIRouter(prefix="/recipes", tags=["4. Recipe Discovery (Public)"])
 ACTIVE_SOURCES = ["healthy_diet_kaggle", "manual"]
@@ -45,6 +46,12 @@ TITLE_STOPWORDS = {
     "vegan",
     "with",
     "without",
+}
+MEAL_PLAN_POOL_SIZES = {
+    2: 40,
+    3: 32,
+    4: 24,
+    5: 18,
 }
 
 
@@ -115,6 +122,91 @@ def macro_similarity_percent(protein_value, carbs_value, fat_value, target_prote
         1.0,
     )
     return round(max(0.0, 1.0 - (distance / macro_total)) * 100.0, 2)
+
+
+def total_macro_values(recipes):
+    return {
+        "protein_g": round(sum(float(recipe.protein_g or 0.0) for recipe in recipes), 2),
+        "carbs_g": round(sum(float(recipe.carbs_g or 0.0) for recipe in recipes), 2),
+        "fat_g": round(sum(float(recipe.fat_g or 0.0) for recipe in recipes), 2),
+    }
+
+
+def build_meal_plan_result(selected_recipes, meals, target_protein, target_carbs, target_fat, diet_type, cuisine_type):
+    totals = total_macro_values(selected_recipes)
+    protein_distance = signed_macro_distance(totals["protein_g"], target_protein)
+    carbs_distance = signed_macro_distance(totals["carbs_g"], target_carbs)
+    fat_distance = signed_macro_distance(totals["fat_g"], target_fat)
+    total_distance = round(abs(protein_distance) + abs(carbs_distance) + abs(fat_distance), 2)
+
+    return {
+        "meals_requested": meals,
+        "target_protein_g": round(float(target_protein), 2),
+        "target_carbs_g": round(float(target_carbs), 2),
+        "target_fat_g": round(float(target_fat), 2),
+        "total_protein_g": totals["protein_g"],
+        "total_carbs_g": totals["carbs_g"],
+        "total_fat_g": totals["fat_g"],
+        "protein_distance_g": protein_distance,
+        "carbs_distance_g": carbs_distance,
+        "fat_distance_g": fat_distance,
+        "total_macro_distance": total_distance,
+        "plan_match_percent": macro_similarity_percent(
+            totals["protein_g"],
+            totals["carbs_g"],
+            totals["fat_g"],
+            target_protein,
+            target_carbs,
+            target_fat,
+        ),
+        "diet_type": diet_type,
+        "cuisine_type": cuisine_type,
+        "recipes": [
+            {
+                "meal_number": index,
+                "recipe": map_recipe(recipe),
+            }
+            for index, recipe in enumerate(selected_recipes, start=1)
+        ],
+    }
+
+
+def choose_meal_plan(recipes, meals, target_protein, target_carbs, target_fat, diet_type, cuisine_type):
+    if len(recipes) < meals:
+        raise HTTPException(status_code=404, detail="Not enough recipes match the current filters to build a meal plan")
+
+    per_meal_protein = float(target_protein) / meals
+    per_meal_carbs = float(target_carbs) / meals
+    per_meal_fat = float(target_fat) / meals
+    pool_size = MEAL_PLAN_POOL_SIZES.get(meals, 18)
+
+    candidate_pool = sorted(
+        recipes,
+        key=lambda recipe: (
+            macro_distance(recipe, per_meal_protein, per_meal_carbs, per_meal_fat),
+            recipe.title.lower(),
+        ),
+    )[:pool_size]
+
+    if len(candidate_pool) < meals:
+        raise HTTPException(status_code=404, detail="Not enough recipes match the current filters to build a meal plan")
+
+    best_plan = None
+    best_sort_key = None
+
+    for combo in combinations(candidate_pool, meals):
+        plan = build_meal_plan_result(combo, meals, target_protein, target_carbs, target_fat, diet_type, cuisine_type)
+        sort_key = (
+            plan["total_macro_distance"],
+            -plan["plan_match_percent"],
+            sum(1 for recipe in combo if recipe.data_source == "manual"),
+            tuple(recipe.title.lower() for recipe in combo),
+        )
+        if best_sort_key is None or sort_key < best_sort_key:
+            best_sort_key = sort_key
+            best_plan = plan
+
+    return best_plan
 
 
 def normalize_title_token(token):
@@ -352,3 +444,46 @@ def recommend_recipes(
 
     scored.sort(key=lambda item: (item["macro_distance"], item["title"].lower()))
     return scored[:limit]
+
+
+@router.get(
+    "/meal-plan",
+    response_model=MealPlanRead,
+    summary="Generate a meal plan for target macros",
+    description="Public recipe discovery step. Builds a multi-meal plan that gets as close as possible to the requested protein, carbohydrate, and fat targets by ranking recipe combinations rather than only single recipes.",
+)
+def generate_meal_plan(
+    target_protein: float = Query(ge=0.0),
+    target_carbs: float = Query(ge=0.0),
+    target_fat: float = Query(ge=0.0),
+    meals: int = Query(default=3, ge=2, le=5, description="How many meals should be included in the plan."),
+    diet_type: str | None = Query(default=None, description="Optional diet filter for all meals in the plan."),
+    cuisine_type: str | None = Query(default=None, description="Optional cuisine filter for all meals in the plan."),
+    db=Depends(get_db),
+):
+    if target_protein == 0 and target_carbs == 0 and target_fat == 0:
+        raise HTTPException(status_code=400, detail="Provide at least one target macro above zero")
+
+    statement = active_recipe_statement()
+    normalized_diet = diet_type.strip().lower() if diet_type else None
+    normalized_cuisine = cuisine_type.strip().lower() if cuisine_type else None
+
+    if normalized_diet:
+        statement = statement.where(Recipe.diet_type == normalized_diet)
+
+    if normalized_cuisine:
+        statement = statement.where(Recipe.cuisine_type == normalized_cuisine)
+
+    recipes = db.scalars(statement).all()
+    if not recipes:
+        raise HTTPException(status_code=404, detail="No recipes match the current filters")
+
+    return choose_meal_plan(
+        recipes,
+        meals,
+        target_protein,
+        target_carbs,
+        target_fat,
+        normalized_diet,
+        normalized_cuisine,
+    )

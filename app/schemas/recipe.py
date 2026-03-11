@@ -75,3 +75,66 @@ class RecipeMatchRead(RecipeRead):
     carbs_distance_g: float
     fat_distance_g: float
     macro_distance: float
+
+
+class MealPlanItemRead(BaseModel):
+    meal_number: int
+    recipe: RecipeRead
+
+
+class MealPlanRead(BaseModel):
+    meals_requested: int
+    target_protein_g: float
+    target_carbs_g: float
+    target_fat_g: float
+    total_protein_g: float
+    total_carbs_g: float
+    total_fat_g: float
+    protein_distance_g: float
+    carbs_distance_g: float
+    fat_distance_g: float
+    total_macro_distance: float
+    plan_match_percent: float
+    diet_type: str | None = None
+    cuisine_type: str | None = None
+    recipes: list[MealPlanItemRead]
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meals_requested": 3,
+                "target_protein_g": 120.0,
+                "target_carbs_g": 150.0,
+                "target_fat_g": 45.0,
+                "total_protein_g": 116.0,
+                "total_carbs_g": 144.0,
+                "total_fat_g": 48.0,
+                "protein_distance_g": -4.0,
+                "carbs_distance_g": -6.0,
+                "fat_distance_g": 3.0,
+                "total_macro_distance": 13.0,
+                "plan_match_percent": 93.78,
+                "diet_type": "keto",
+                "cuisine_type": None,
+                "recipes": [
+                    {
+                        "meal_number": 1,
+                        "recipe": {
+                            "id": 101,
+                            "title": "Chicken Salad Bowl",
+                            "description": "Example recipe",
+                            "servings": 1,
+                            "diet_type": "keto",
+                            "cuisine_type": "american",
+                            "protein_g": 38.0,
+                            "carbs_g": 22.0,
+                            "fat_g": 15.0,
+                            "data_source": "healthy_diet_kaggle",
+                            "source_code": "healthy_diet:all_diets:101",
+                            "created_by_user_id": None,
+                        },
+                    }
+                ],
+            }
+        }
+    )

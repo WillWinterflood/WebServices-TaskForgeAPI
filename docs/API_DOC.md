@@ -9,6 +9,7 @@ Main use cases:
 - filter recipes by diet type or cuisine type
 - filter recipes by macro ranges
 - find similar recipes by recipe words or macro profile
+- generate a full meal plan against target macros
 - recommend recipes against target macros
 - optionally register, log in, and inspect the current user
 
@@ -102,8 +103,9 @@ Common codes:
 2. `GET /api/v1/recipes`
 3. `GET /api/v1/recipes/search`
 4. `GET /api/v1/recipes/{recipe_id}/similar`
-5. `GET /api/v1/recipes/recommend`
-6. optional auth demo
+5. `GET /api/v1/recipes/meal-plan`
+6. `GET /api/v1/recipes/recommend`
+7. optional auth demo
 
 ## Endpoint Reference
 ### 1. Start Here
@@ -125,12 +127,15 @@ Purpose:
 Success response:
 ```json
 {
-  "primary_workflow": [
+    "primary_workflow": [
     "1. Run the healthy-diet dataset importer with scripts/import_healthy_diet_recipes.py.",
-    "2. Call GET /api/v1/recipes to confirm imported recipes exist.",
-    "3. Call GET /api/v1/recipes/search to filter by title, diet, cuisine, or macro ranges.",
-    "4. Call GET /api/v1/recipes/{recipe_id}/similar to find recipes with similar macro profiles.",
-    "5. Optionally call GET /api/v1/recipes/recommend with target macros."
+    "2. If you want protected features, register, log in, and authorize with a bearer token.",
+    "3. Use the protected recipe routes to create, update, or delete your own manual recipes.",
+    "4. Use GET /api/v1/recipes to confirm imported recipes exist.",
+    "5. Use GET /api/v1/recipes/search to filter by title, diet, cuisine, or macro ranges.",
+    "6. Use GET /api/v1/recipes/{recipe_id}/similar to find recipes with similar macro profiles.",
+    "7. Use GET /api/v1/recipes/meal-plan to build a full plan against target macros.",
+    "8. Optionally call GET /api/v1/recipes/recommend with target macros."
   ]
 }
 ```
@@ -296,7 +301,38 @@ Example:
 curl "http://127.0.0.1:8000/api/v1/recipes/recommend?target_protein=30&target_carbs=20&target_fat=10&limit=5"
 ```
 
-### 3. Auth (Optional)
+#### `GET /api/v1/recipes/meal-plan`
+Purpose:
+- build a multi-meal plan that gets close to a target macro profile
+- uses recipe combinations rather than ranking single recipes only
+
+Required query parameters:
+- `target_protein`
+- `target_carbs`
+- `target_fat`
+
+Optional query parameters:
+- `meals`
+- `diet_type`
+- `cuisine_type`
+
+Example:
+```bash
+curl "http://127.0.0.1:8000/api/v1/recipes/meal-plan?target_protein=120&target_carbs=150&target_fat=45&meals=3"
+```
+
+Response fields of interest:
+- `recipes`
+- `total_protein_g`
+- `total_carbs_g`
+- `total_fat_g`
+- `protein_distance_g`
+- `carbs_distance_g`
+- `fat_distance_g`
+- `total_macro_distance`
+- `plan_match_percent`
+
+### 3. Authentication Setup
 #### `POST /api/v1/auth/register`
 Purpose:
 - create a user account

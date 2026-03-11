@@ -26,7 +26,8 @@ def api_guide():
             "4. Use GET /api/v1/recipes to confirm imported recipes exist.",
             "5. Use GET /api/v1/recipes/search to filter by title, diet, cuisine, or macro ranges.",
             "6. Use GET /api/v1/recipes/{recipe_id}/similar to find recipes with similar macro profiles.",
-            "7. Optionally call GET /api/v1/recipes/recommend with target macros.",
+            "7. Use GET /api/v1/recipes/meal-plan to build a full plan against target macros.",
+            "8. Optionally call GET /api/v1/recipes/recommend with target macros.",
         ],
         "important_notes": [
             "This dataset is strong for macro-based filtering and similarity.",
@@ -42,6 +43,7 @@ def api_guide():
             "list_recipes": "/api/v1/recipes",
             "search_recipes": "/api/v1/recipes/search",
             "similar_recipes": "/api/v1/recipes/{recipe_id}/similar",
+            "meal_plan": "/api/v1/recipes/meal-plan",
             "recommend_by_macros": "/api/v1/recipes/recommend",
         },
     }

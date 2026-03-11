@@ -1,6 +1,6 @@
 # Healthy Recipe Search and Macro Recommendation API
 
-A FastAPI backend for searching healthy recipes, filtering by macro ranges, and finding similar recipes by macro profile.
+A FastAPI backend for searching healthy recipes, filtering by macro ranges, finding similar recipes by macro profile, and generating meal plans against target macros.
 
 ## Primary Workflow
 1. Start the API
@@ -8,7 +8,8 @@ A FastAPI backend for searching healthy recipes, filtering by macro ranges, and 
 3. Call `GET /api/v1/recipes`
 4. Call `GET /api/v1/recipes/search`
 5. Call `GET /api/v1/recipes/{recipe_id}/similar`
-6. Optionally call `GET /api/v1/recipes/recommend`
+6. Call `GET /api/v1/recipes/meal-plan`
+7. Optionally call `GET /api/v1/recipes/recommend`
 
 If you are unsure where to start in Swagger, open `GET /api/v1/guide` first.
 
@@ -18,6 +19,7 @@ If you are unsure where to start in Swagger, open `GET /api/v1/guide` first.
 - filter recipes by diet type and cuisine type
 - filter recipes by protein, carbs, and fat ranges
 - find recipes with similar macro profiles
+- generate a multi-meal plan for target macros
 - recommend recipes for target macro values
 - optionally create your own manual macro-based recipes
 
@@ -65,7 +67,8 @@ py scripts/import_healthy_diet_recipes.py --input-file path\to\All_Diets.csv --m
 2. `GET /api/v1/recipes`
 3. `GET /api/v1/recipes/search?diet_type=keto&min_protein=20`
 4. `GET /api/v1/recipes/{recipe_id}/similar`
-5. `GET /api/v1/recipes/recommend?target_protein=30&target_carbs=20&target_fat=10`
+5. `GET /api/v1/recipes/meal-plan?target_protein=120&target_carbs=150&target_fat=45&meals=3`
+6. `GET /api/v1/recipes/recommend?target_protein=30&target_carbs=20&target_fat=10`
 
 ## Optional Manual CRUD
 Use these only after the dataset import is working and after logging in:
