@@ -12,4 +12,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD python -m alembic -c alembic.ini upgrade head && exec python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD ["python", "scripts/startup.py"]
