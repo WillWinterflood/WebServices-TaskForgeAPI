@@ -88,3 +88,7 @@ Auth is kept as an optional extension:
 - [docs/API_DOC.md](docs/API_DOC.md)
 
 For submission, export `docs/API_DOC.md` to PDF and reference that PDF in the final repo and report.
+
+# FINAL DEPLOYMENT URL 
+
+- https://taskforge-api-production.up.railway.app/docs#/
