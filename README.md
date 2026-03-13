@@ -89,7 +89,7 @@ Auth is kept as an optional extension:
 - `GET /api/v1/auth/me`
 
 ## API Documentation
-- [docs/API_DOC.pdf](docs/API_DOC.pdf)
+- [docs/APIDocs.pdf](docs/APIDocs.pdf)
 
 For submission, export `docs/API_DOC.md` to PDF and reference that PDF in the final repo and report.
 
