@@ -373,16 +373,3 @@ Purpose:
 Requires:
 - bearer token
 
-## Submission Checklist For This API Doc
-- project overview included
-- setup and run instructions included
-- dataset choice documented
-- auth process documented
-- endpoint list documented
-- parameters documented
-- example requests included
-- response structure documented
-- error format documented
-
-## Final Note
-For coursework submission, export this markdown file as a PDF and reference that PDF in `README.md`.
