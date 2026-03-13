@@ -2,6 +2,10 @@
 
 A FastAPI backend for searching healthy recipes, filtering by macro ranges, finding similar recipes by macro profile, and generating meal plans against target macros.
 
+# FINAL DEPLOYMENT URL 
+
+- https://taskforge-api-production.up.railway.app/docs#/
+
 ## Primary Workflow
 1. Start the API
 2. Import the healthy-diet dataset
@@ -85,7 +89,7 @@ Auth is kept as an optional extension:
 - `GET /api/v1/auth/me`
 
 ## API Documentation
-- [docs/API_DOC.md](docs/API_DOC.md)
+- [docs/API_DOC.pdf](docs/API_DOC.pdf)
 
 For submission, export `docs/API_DOC.md` to PDF and reference that PDF in the final repo and report.
 
